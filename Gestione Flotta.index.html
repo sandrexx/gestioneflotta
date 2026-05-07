@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="it"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Gestione Flotta">
+<meta name="theme-color" content="#0D47A1">
+<title>Gestione Flotta</title>
+
+<!-- ============================================================
+     GESTIONE FLOTTA - Web App PWA
+     Autore: Sandro Cinquegrana
+     Funziona su iPhone, Android, Desktop via browser
+     
+     CONFIGURAZIONE GOOGLE DRIVE:
+     Per collegare i tuoi file Drive, segui le istruzioni in fondo
+     alla pagina nella sezione "CONFIGURAZIONE".
+     ============================================================ -->
+
+<style>
+  :root {
+    --blu:     #0D47A1;
+    --blu2:    #1565C0;
+    --arancio: #E65100;
+    --verde:   #2E7D32;
+    --verde2:  #1B5E20;
+    --viola:   #6A1B9A;
+    --grigio:  #F5F5F5;
+    --bianco:  #FFFFFF;
+    --testo:   #212121;
+    --testo2:  #757575;
+    --bordo:   #E0E0E0;
+    --radius:  14px;
+    --shadow:  0 2px 8px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--grigio);
+    color: var(--testo);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- HEADER ---- */
+  .app-header {
+    background: var(--bianco);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-icon { font-size: 32px; }
+  .header-titles h1 { font-size: 20px; font-weight: 800; color: #D32F2F; }
+  .header-titles p  { font-size: 11px; font-weight: 700; color: var(--blu2); }
+  .back-btn {
+    background: none; border: none; font-size: 24px;
+    cursor: pointer; padding: 4px 8px; color: var(--blu2);
+    display: none;
+  }
+  .back-btn.visible { display: block; }
+
+  /* ---- HOME PULSANTI ---- */
+  #screen-home { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+  .menu-btn {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    border: none;
+    width: 100%;
+    text-align: left;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, opacity 0.1s;
+    color: white;
+  }
+  .menu-btn:active { transform: scale(0.98); opacity: 0.9; }
+  .menu-btn .btn-icon { font-size: 26px; flex-shrink: 0; }
+  .menu-btn .btn-title { font-size: 15px; font-weight: 700; }
+  .menu-btn .btn-sub   { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+  .btn-blu    { background: var(--blu2); }
+  .btn-arancio{ background: var(--arancio); }
+  .btn-verde  { background: var(--verde); }
+  .btn-blu2   { background: var(--blu); }
+  .btn-viola  { background: var(--viola); }
+  .btn-verde2 { background: var(--verde2); }
+
+  /* ---- SCREENS ---- */
+  .screen { display: none; padding: 12px; }
+  .screen.active { display: block; }
+
+  /* ---- TOOLBAR SEZIONE ---- */
+  .section-header {
+    padding: 12px 16px;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    margin: -12px -12px 12px -12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ---- SEARCH ---- */
+  .search-box {
+    background: white;
+    border: 1.5px solid var(--bordo);
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 14px;
+    width: 100%;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  .search-box:focus { border-color: var(--blu2); }
+
+  /* ---- CARD ---- */
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+  .card:active { transform: scale(0.99); }
+  .card-title  { font-weight: 700; font-size: 14px; color: var(--testo); }
+  .card-sub    { font-size: 12px; color: var(--testo2); margin-top: 3px; }
+  .card-badge  {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+
+  /* ---- TABELLA ---- */
+  .table-wrap { overflow-x: auto; border-radius: 10px; background: white; box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--blu2); color: white; padding: 10px 8px; text-align: left; white-space: nowrap; }
+  td { padding: 8px; border-bottom: 1px solid var(--bordo); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #F8F9FF; }
+
+  /* ---- SCADENZE COLORI ---- */
+  .scad-scad  { color: #C62828; font-weight: 700; }
+  .scad-prox  { color: #E65100; font-weight: 600; }
+  .scad-ok    { color: #2E7D32; }
+
+  /* ---- FILTRO CANTIERE ---- */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-chip {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1.5px solid var(--bordo); background: white; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-chip.active { background: var(--blu2); color: white; border-color: var(--blu2); }
+
+  /* ---- MOVIMENTI GRAFICO ---- */
+  .chart-container {
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  canvas { max-width: 100%; }
+
+  /* ---- RIEPILOGO ---- */
+  .riepilogo {
+    background: white;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    color: var(--testo2);
+  }
+  .riepilogo strong { color: var(--testo); }
+
+  /* ---- LINK DRIVE ---- */
+  .drive-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--blu2); color: white;
+    padding: 10px 16px; border-radius: 24px;
+    text-decoration: none; font-size: 13px; font-weight: 600;
+    margin: 4px; box-shadow: var(--shadow);
+    transition: opacity 0.15s;
+  }
+  .drive-link:active { opacity: 0.8; }
+
+  /* ---- LOADING ---- */
+  .loading {
+    text-align: center; padding: 40px 20px; color: var(--testo2);
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--bordo);
+    border-top-color: var(--blu2);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---- ERRORE ---- */
+  .error-box {
+    background: #FFF3E0; border: 1px solid #FFB74D;
+    border-radius: 10px; padding: 16px; margin: 12px 0;
+    font-size: 13px; color: #E65100;
+  }
+
+  /* ---- CONFIGURAZIONE ---- */
+  .config-section {
+    background: white; border-radius: 12px;
+    padding: 16px; margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .config-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; color: var(--blu2); }
+  .config-input {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--bordo);
+    border-radius: 8px; font-size: 13px; outline: none; margin-bottom: 8px;
+  }
+  .config-input:focus { border-color: var(--blu2); }
+  .save-btn {
+    background: var(--verde); color: white; border: none;
+    padding: 12px 24px; border-radius: 24px; font-size: 14px; font-weight: 700;
+    cursor: pointer; width: 100%; box-shadow: var(--shadow);
+  }
+
+  /* ---- DETTAGLIO MEZZO ---- */
+  .detail-row { display: flex; padding: 8px 0; border-bottom: 1px solid var(--bordo); gap: 12px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { font-size: 11px; color: var(--testo2); width: 120px; flex-shrink: 0; font-weight: 600; text-transform: uppercase; }
+  .detail-value { font-size: 13px; color: var(--testo); }
+
+  /* ---- RESPONSIVE ---- */
+  @media (min-width: 600px) {
+    #screen-home { max-width: 500px; margin: 0 auto; }
+    .screen { max-width: 800px; margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<div class="app-header">
+  <button class="back-btn" id="backBtn" onclick="goBack()">←</button>
+  <div class="header-icon">🚛</div>
+  <div class="header-titles">
+    <h1>Gestione Flotta</h1>
+    <p>Creata da Sandro Cinquegrana</p>
+  </div>
+</div>
+
+<!-- ===================== HOME ===================== -->
+<div id="screen-home" style="display: flex; flex-direction: column;">
+  <button class="menu-btn btn-blu" onclick="showScreen('carte')">
+    <span class="btn-icon">📄</span>
+    <div><div class="btn-title">CARTE DI CIRCOLAZIONE</div><div class="btn-sub">Cerca e visualizza i PDF dei mezzi</div></div>
+  </button>
+  <button class="menu-btn btn-arancio" onclick="showScreen('manutenzioni')">
+    <span class="btn-icon">🔧</span>
+    <div><div class="btn-title">MANUTENZIONE FLOTTA</div><div class="btn-sub">Registro interventi e schede PDF</div></div>
+  </button>
+  <button class="menu-btn btn-verde" onclick="showScreen('polizze')">
+    <span class="btn-icon">🛡️</span>
+    <div><div class="btn-title">POLIZZE ASSICURATIVE</div><div class="btn-sub">Scadenze e documenti assicurativi</div></div>
+  </button>
+  <button class="menu-btn btn-blu2" onclick="showScreen('gestione')">
+    <span class="btn-icon">🚚</span>
+    <div><div class="btn-title">GESTIONE MEZZI</div><div class="btn-sub">Anagrafica e dati tecnici dei mezzi</div></div>
+  </button>
+  <button class="menu-btn btn-viola" onclick="showScreen('revisioni')">
+    <span class="btn-icon">📅</span>
+    <div><div class="btn-title">REVISIONI MEZZI</div><div class="btn-sub">Scadenze revisioni e tachigrafi</div></div>
+  </button>
+  <button class="menu-btn btn-verde2" onclick="showScreen('movimenti')">
+    <span class="btn-icon">📊</span>
+    <div><div class="btn-title">MOVIMENTI FLOTTA</div><div class="btn-sub">Spese officina e movimenti per mezzo</div></div>
+  </button>
+  <button class="menu-btn" style="background:#546E7A;" onclick="showScreen('config')">
+    <span class="btn-icon">⚙️</span>
+    <div><div class="btn-title">CONFIGURAZIONE</div><div class="btn-sub">Collega i file Google Drive</div></div>
+  </button>
+</div>
+
+<!-- ===================== CARTE DI CIRCOLAZIONE ===================== -->
+<div id="screen-carte" class="screen">
+  <div class="section-header" style="background:var(--blu2)">📄 Carte di Circolazione</div>
+  <div class="riepilogo">
+    I PDF delle carte di circolazione sono nello ZIP su Google Drive.<br>
+    Clicca per aprire il file direttamente.
+  </div>
+  <a id="link-carte" class="drive-link" href="#" target="_blank">
+    📁 Apri ZIP Carte di Circolazione su Drive
+  </a>
+  <div style="margin-top:16px;">
+    <input class="search-box" id="search-carte" placeholder="🔍  Cerca targa..." oninput="cercaCarte(this.value)">
+    <div id="list-carte">
+      <div class="loading"><div class="spinner"></div>Caricamento...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MANUTENZIONI ===================== -->
+<div id="screen-manutenzioni" class="screen">
+  <div class="section-header" style="background:var(--arancio)">🔧 Manutenzione Flotta</div>
+  <div class="riepilogo">
+    Registro manutenzioni e schede PDF per anno.
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+    <a id="link-man-registro" class="drive-link" href="#" target="_blank">📊 Registro Manutenzioni</a>
+    <a id="link-man-2025" class="drive-link" href="#" target="_blank">📦 PDF 2025</a>
+    <a id="link-man-2026" class="drive-link" href="#" target="_blank">📦 PDF 2026</a>
+  </div>
+  <input class="search-box" id="search-man" placeholder="🔍  Cerca targa o descrizione..." oninput="cercaManutenzioni(this.value)">
+  <div id="list-manutenzioni">
+    <div class="loading"><div class="spinner"></div>Caricamento dati...</div>
+  </div>
+</div>
+
+<!-- ===================== POLIZZE ===================== -->
+<div id="screen-polizze" class="screen">
+  <div class="section-header" style="background:var(--verde)">🛡️ Polizze Assicurative</div>
+  <a id="link-polizze" class="drive-link" href="#" target="_blank">📁 Apri ZIP Polizze su Drive</a>
+  <div style="margin-top:12px;">
+    <div class="riepilogo">Le polizze sono organizzate per compagnia e categoria nel file ZIP.</div>
+  </div>
+</div>
+
+<!-- ===================== GESTIONE MEZZI ===================== -->
+<div id="screen-gestione" class="screen">
+  <div class="section-header" style="background:var(--blu)">🚚 Gestione Mezzi</div>
+  <input class="search-box" id="search-gestione" placeholder="🔍  Cerca targa, modello o cantiere..." oninput="cercaGestione(this.value)">
+  <div class="filter-row" id="filter-cantieri-gestione"></div>
+  <div id="riepilogo-gestione" class="riepilogo" style="display:none"></div>
+  <div id="list-gestione">
+    <div class="loading"><div class="spinner"></div>Caricamento da Google Drive...</div>
+  </div>
+</div>
+
+<!-- ===================== REVISIONI ===================== -->
+<div id="screen-revisioni" class="screen">
+  <div class="section-header" style="background:var(--viola)">📅 Revisioni Mezzi</div>
+  <div class="filter-row">
+    <button class="filter-chip active" onclick="filtraRevisioni('tutti',this)">Tutti</button>
+    <button class="filter-chip" onclick="filtraRevisioni('scadute',this)">⚠️ Scadute</button>
+    <button class="filter-chip" onclick="filtraRevisioni('prossime',this)">🔔 Entro 60gg</button>
+    <button class="filter-chip" onclick="filtraRevisioni('ok',this)">✅ OK</button>
+  </div>
+  <input class="search-box" id="search-revisioni" placeholder="🔍  Cerca automezzo..." oninput="aggiornaRevisioni()">
+  <div id="riepilogo-revisioni" class="riepilogo" style="display:none"></div>
+  <div id="list-revisioni">
+    <div class="loading"><div class="spinner"></div>Caricamento da Google Drive...</div>
+  </div>
+</div>
+
+<!-- ===================== MOVIMENTI FLOTTA ===================== -->
+<div id="screen-movimenti" class="screen">
+  <div class="section-header" style="background:var(--verde2)">📊 Movimenti Flotta</div>
+  <input class="search-box" id="search-movimenti" placeholder="🔍  Cerca targa o marca..." oninput="cercaMovimenti(this.value)">
+  <div class="filter-row" id="filter-cantieri-mov"></div>
+  <div id="riepilogo-movimenti" class="riepilogo" style="display:none"></div>
+  <div id="list-movimenti">
+    <div class="loading"><div class="spinner"></div>Caricamento da Google Drive...</div>
+  </div>
+</div>
+
+<!-- ===================== DETTAGLIO MEZZO ===================== -->
+<div id="screen-dettaglio-mezzo" class="screen">
+  <div class="section-header" id="dettaglio-header" style="background:var(--blu)">🚚 Dettaglio Mezzo</div>
+  <div id="dettaglio-content"></div>
+</div>
+
+<!-- ===================== DETTAGLIO MOVIMENTI ===================== -->
+<div id="screen-dettaglio-mov" class="screen">
+  <div class="section-header" id="dettaglio-mov-header" style="background:var(--verde2)">📊 Movimenti Mezzo</div>
+  <div id="dettaglio-mov-content"></div>
+</div>
+
+<!-- ===================== CONFIGURAZIONE ===================== -->
+<div id="screen-config" class="screen">
+  <div class="section-header" style="background:#546E7A">⚙️ Configurazione Google Drive</div>
+
+  <div class="config-section">
+    <h3>🔑 Come ottenere l'API Key</h3>
+    <p style="font-size:12px;color:var(--testo2);line-height:1.5;">
+      1. Vai su <strong>console.cloud.google.com</strong><br>
+      2. Crea un progetto → Abilita "Google Drive API" e "Google Sheets API"<br>
+      3. Credenziali → Crea chiave API<br>
+      4. Rendi pubblici i file Drive (condividi → chiunque con il link può visualizzare)<br>
+      5. Inserisci la chiave qui sotto e salva
+    </p>
+  </div>
+
+  <div class="config-section">
+    <h3>🔧 Impostazioni</h3>
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Google API Key</label>
+    <input class="config-input" id="cfg-apikey" placeholder="AIzaSy..." type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID Foglio Gestione Mezzi</label>
+    <input class="config-input" id="cfg-gestione" placeholder="1YbH5nWrPSV9dJ3HEy-wC_UkKDmrvBFjm" type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID Foglio Revisioni</label>
+    <input class="config-input" id="cfg-revisioni" placeholder="11RFUCiL51dieFuwK6Q56b5TVL25RAIH5" type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID Foglio Lista Movimenti</label>
+    <input class="config-input" id="cfg-movimenti" placeholder="1FH8Hh57Y1creUNB98bdS8TveVL0w26b8" type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID ZIP Carte di Circolazione</label>
+    <input class="config-input" id="cfg-carte" placeholder="1RmhOaJi3f2uuDZj9tknbYkdikiKVuoJ-" type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID ZIP Polizze</label>
+    <input class="config-input" id="cfg-polizze" placeholder="103_ry0Xw2pmJDAMbGnrkss21hCmu8Jcs" type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID Registro Manutenzioni (xlsm)</label>
+    <input class="config-input" id="cfg-man-reg" placeholder="1wD5aal7hcZ3n9fF96e8FR_Pkt_wavQjb" type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID ZIP Manutenzioni 2025</label>
+    <input class="config-input" id="cfg-man-2025" placeholder="1DbQKN4ZvrUFjC3TX6l1bSVwIt7xRUJES" type="text">
+
+    <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">ID ZIP Manutenzioni 2026</label>
+    <input class="config-input" id="cfg-man-2026" placeholder="16VTNfPcu4q76cIp5Dp8pXDrhcB-sp_w4" type="text">
+
+    <button class="save-btn" onclick="salvaConfig()">💾 Salva Configurazione</button>
+    <div id="config-msg" style="margin-top:10px;font-size:13px;text-align:center;"></div>
+  </div>
+
+  <div class="config-section">
+    <h3>📱 Installa sul telefono</h3>
+    <p style="font-size:12px;color:var(--testo2);line-height:1.6;">
+      <strong>iPhone (Safari):</strong> Apri questa pagina → tocca Condividi → "Aggiungi a schermata Home"<br><br>
+      <strong>Android (Chrome):</strong> Apri questa pagina → menu ⋮ → "Aggiungi a schermata Home"
+    </p>
+  </div>
+</div>
+
+<script>
+// ================================================================
+//  CONFIGURAZIONE ID GOOGLE DRIVE (pre-caricati)
+// ================================================================
+const DEFAULT_CONFIG = {
+  apikey:   '',
+  gestione: '1YbH5nWrPSV9dJ3HEy-wC_UkKDmrvBFjm',
+  revisioni:'11RFUCiL51dieFuwK6Q56b5TVL25RAIH5',
+  movimenti:'1FH8Hh57Y1creUNB98bdS8TveVL0w26b8',
+  carte:    '1RmhOaJi3f2uuDZj9tknbYkdikiKVuoJ-',
+  polizze:  '103_ry0Xw2pmJDAMbGnrkss21hCmu8Jcs',
+  manReg:   '1wD5aal7hcZ3n9fF96e8FR_Pkt_wavQjb',
+  man2025:  '1DbQKN4ZvrUFjC3TX6l1bSVwIt7xRUJES',
+  man2026:  '16VTNfPcu4q76cIp5Dp8pXDrhcB-sp_w4',
+};
+
+// ================================================================
+//  STATE
+// ================================================================
+let cfg = {};
+let datiGestione  = [];
+let datiRevisioni = [];
+let datiMovimenti = [];
+let screenHistory = [];
+let filtroRevisioni = 'tutti';
+let filtroCantiereGestione = '';
+let filtroCantiereMovimenti = '';
+
+// ================================================================
+//  CONFIG
+// ================================================================
+function loadConfig() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('gf_config') || '{}');
+    cfg = Object.assign({}, DEFAULT_CONFIG, saved);
+  } catch(e) { cfg = { ...DEFAULT_CONFIG }; }
+}
+
+function salvaConfig() {
+  cfg.apikey   = document.getElementById('cfg-apikey').value.trim();
+  cfg.gestione = document.getElementById('cfg-gestione').value.trim() || DEFAULT_CONFIG.gestione;
+  cfg.revisioni= document.getElementById('cfg-revisioni').value.trim() || DEFAULT_CONFIG.revisioni;
+  cfg.movimenti= document.getElementById('cfg-movimenti').value.trim() || DEFAULT_CONFIG.movimenti;
+  cfg.carte    = document.getElementById('cfg-carte').value.trim() || DEFAULT_CONFIG.carte;
+  cfg.polizze  = document.getElementById('cfg-polizze').value.trim() || DEFAULT_CONFIG.polizze;
+  cfg.manReg   = document.getElementById('cfg-man-reg').value.trim() || DEFAULT_CONFIG.manReg;
+  cfg.man2025  = document.getElementById('cfg-man-2025').value.trim() || DEFAULT_CONFIG.man2025;
+  cfg.man2026  = document.getElementById('cfg-man-2026').value.trim() || DEFAULT_CONFIG.man2026;
+  localStorage.setItem('gf_config', JSON.stringify(cfg));
+  document.getElementById('config-msg').textContent = '✅ Salvato!';
+  setTimeout(() => document.getElementById('config-msg').textContent = '', 2000);
+}
+
+function fillConfigInputs() {
+  document.getElementById('cfg-apikey').value   = cfg.apikey   || '';
+  document.getElementById('cfg-gestione').value = cfg.gestione || '';
+  document.getElementById('cfg-revisioni').value= cfg.revisioni|| '';
+  document.getElementById('cfg-movimenti').value= cfg.movimenti|| '';
+  document.getElementById('cfg-carte').value    = cfg.carte    || '';
+  document.getElementById('cfg-polizze').value  = cfg.polizze  || '';
+  document.getElementById('cfg-man-reg').value  = cfg.manReg   || '';
+  document.getElementById('cfg-man-2025').value = cfg.man2025  || '';
+  document.getElementById('cfg-man-2026').value = cfg.man2026  || '';
+}
+
+// ================================================================
+//  NAVIGAZIONE
+// ================================================================
+function showScreen(name) {
+  // Nascondi home e tutte le screens
+  document.getElementById('screen-home').style.display = 'none';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+  // Mostra screen richiesta
+  const el = document.getElementById('screen-' + name);
+  if (el) {
+    el.classList.add('active');
+    screenHistory.push(name);
+    document.getElementById('backBtn').classList.add('visible');
+    window.scrollTo(0,0);
+    loadScreen(name);
+  }
+}
+
+function goBack() {
+  screenHistory.pop();
+  const prev = screenHistory[screenHistory.length - 1];
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+
+  if (!prev) {
+    // Torna alla home
+    document.getElementById('screen-home').style.display = 'flex';
+    document.getElementById('screen-home').style.flexDirection = 'column';
+    document.getElementById('backBtn').classList.remove('visible');
+    screenHistory = [];
+  } else {
+    document.getElementById('screen-' + prev).classList.add('active');
+    window.scrollTo(0,0);
+  }
+}
+
+// ================================================================
+//  GOOGLE SHEETS API
+// ================================================================
+async function fetchSheet(sheetId, range) {
+  if (!cfg.apikey) {
+    return { error: 'API Key non configurata. Vai in Configurazione.' };
+  }
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?key=${cfg.apikey}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json();
+      return { error: err.error?.message || 'Errore API Google' };
+    }
+    const data = await res.json();
+    return { values: data.values || [] };
+  } catch(e) {
+    return { error: 'Errore connessione: ' + e.message };
+  }
+}
+
+function driveDownloadUrl(fileId) {
+  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
+
+function driveViewUrl(fileId) {
+  return `https://drive.google.com/file/d/${fileId}/view`;
+}
+
+function driveSheetUrl(sheetId) {
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/edit`;
+}
+
+// ================================================================
+//  LOAD SCREEN
+// ================================================================
+function loadScreen(name) {
+  if (name === 'config') { fillConfigInputs(); return; }
+  if (name === 'carte') { loadCarte(); return; }
+  if (name === 'manutenzioni') { loadManutenzioni(); return; }
+  if (name === 'polizze') { loadPolizze(); return; }
+  if (name === 'gestione' && datiGestione.length === 0) { loadGestione(); return; }
+  if (name === 'gestione') { renderGestione(); return; }
+  if (name === 'revisioni' && datiRevisioni.length === 0) { loadRevisioni(); return; }
+  if (name === 'revisioni') { aggiornaRevisioni(); return; }
+  if (name === 'movimenti' && datiMovimenti.length === 0) { loadMovimenti(); return; }
+  if (name === 'movimenti') { renderMovimenti(); return; }
+}
+
+// ================================================================
+//  CARTE DI CIRCOLAZIONE
+// ================================================================
+function loadCarte() {
+  const zipUrl = driveViewUrl(cfg.carte);
+  document.getElementById('link-carte').href = zipUrl;
+  document.getElementById('list-carte').innerHTML = `
+    <div class="card">
+      <div class="card-title">📁 File ZIP Carte</div>
+      <div class="card-sub">Contiene i PDF di tutte le carte di circolazione</div>
+      <a href="${zipUrl}" target="_blank" class="drive-link" style="margin-top:10px;display:inline-flex;">
+        Apri su Google Drive
+      </a>
+    </div>
+    <div class="error-box">
+      ℹ️ Per visualizzare le singole targhe, i PDF devono essere
+      estratti dallo ZIP e caricati come file singoli su Drive.
+      Contatta l'amministratore per configurare l'accesso diretto.
+    </div>`;
+}
+
+// ================================================================
+//  MANUTENZIONI
+// ================================================================
+function loadManutenzioni() {
+  document.getElementById('link-man-registro').href = driveViewUrl(cfg.manReg);
+  document.getElementById('link-man-2025').href = driveViewUrl(cfg.man2025);
+  document.getElementById('link-man-2026').href = driveViewUrl(cfg.man2026);
+
+  const result = fetchSheet(cfg.gestione, 'Gestione!D4:D314');
+  result.then(data => {
+    if (data.error) {
+      document.getElementById('list-manutenzioni').innerHTML =
+        `<div class="error-box">⚠️ ${data.error}<br>I link ai file sono comunque disponibili sopra.</div>`;
+      return;
+    }
+    const targhe = (data.values || []).flat().filter(v => v && v.trim()).sort();
+    renderListaManutenzioni(targhe, '');
+  });
+}
+
+function renderListaManutenzioni(targhe, filtro) {
+  const found = filtro ? targhe.filter(t => t.toUpperCase().includes(filtro.toUpperCase())) : targhe;
+  if (found.length === 0) {
+    document.getElementById('list-manutenzioni').innerHTML = '<div class="loading">Nessun risultato</div>';
+    return;
+  }
+  document.getElementById('list-manutenzioni').innerHTML = found.map(t => `
+    <div class="card">
+      <div class="card-title">🚛 ${t}</div>
+      <div class="card-sub">Cerca nel registro manutenzioni</div>
+    </div>`).join('');
+}
+
+function cercaManutenzioni(q) {
+  const targhe = datiGestione.map(m => m.targa).filter(Boolean).sort();
+  renderListaManutenzioni(targhe, q);
+}
+
+// ================================================================
+//  POLIZZE
+// ================================================================
+function loadPolizze() {
+  document.getElementById('link-polizze').href = driveViewUrl(cfg.polizze);
+}
+
+// ================================================================
+//  GESTIONE MEZZI
+// ================================================================
+async function loadGestione() {
+  document.getElementById('list-gestione').innerHTML =
+    '<div class="loading"><div class="spinner"></div>Caricamento da Google Drive...</div>';
+
+  const data = await fetchSheet(cfg.gestione, 'Gestione!A4:T314');
+  if (data.error) {
+    document.getElementById('list-gestione').innerHTML = `
+      <div class="error-box">⚠️ ${data.error}</div>
+      <a href="${driveSheetUrl(cfg.gestione)}" target="_blank" class="drive-link">
+        📊 Apri Gestione Mezzi su Drive
+      </a>`;
+    return;
+  }
+
+  // Riga 4 = intestazioni (indice 0 nell'array), dati da riga 5 (indice 1+)
+  const rows = data.values || [];
+  datiGestione = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r || !r[3]) continue; // salta righe senza targa
+    datiGestione.push({
+      num:       r[0] || '',
+      tipologia: r[1] || '',
+      modello:   r[2] || '',
+      targa:     (r[3] || '').trim().toUpperCase(),
+      cantiere:  r[4] || '',
+      posLibretto: r[6] || '',
+      immatricolato: r[7] || '',
+      telaio:    r[8] || '',
+      euro:      r[9] || '',
+      autTrasporto: r[10] || '',
+      assi:      r[11] || '',
+      pneumatici:r[12] || '',
+      portata:   r[13] || '',
+      massa:     r[14] || '',
+      attrezzatura: r[15] || '',
+      categoria: r[16] || '',
+      disponibilita: r[17] || '',
+      proprieta: r[18] || '',
+    });
+  }
+
+  // Cantieri unici
+  const cantieri = [...new Set(datiGestione.map(m => m.cantiere).filter(Boolean))].sort();
+  renderFiltriCantiere('filter-cantieri-gestione', cantieri, (c) => {
+    filtroCantiereGestione = c;
+    renderGestione();
+  });
+
+  renderGestione();
+}
+
+function renderGestione() {
+  const q = document.getElementById('search-gestione').value.trim().toUpperCase();
+  let lista = datiGestione;
+  if (filtroCantiereGestione) lista = lista.filter(m => m.cantiere === filtroCantiereGestione);
+  if (q) lista = lista.filter(m =>
+    m.targa.includes(q) || m.modello.toUpperCase().includes(q) || m.cantiere.toUpperCase().includes(q) || m.tipologia.toUpperCase().includes(q)
+  );
+
+  const riepilogo = document.getElementById('riepilogo-gestione');
+  riepilogo.style.display = 'block';
+  riepilogo.innerHTML = `<strong>${lista.length}</strong> mezzi${filtroCantiereGestione ? ' — Cantiere: <strong>'+filtroCantiereGestione+'</strong>' : ''}`;
+
+  if (lista.length === 0) {
+    document.getElementById('list-gestione').innerHTML = '<div class="loading">Nessun mezzo trovato</div>';
+    return;
+  }
+
+  document.getElementById('list-gestione').innerHTML = lista.map(m => `
+    <div class="card" onclick="mostraDettaglioMezzo('${m.targa}')">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div class="card-title">🚛 ${m.targa}</div>
+          <div class="card-sub">${m.modello || 'N/D'}</div>
+        </div>
+        <span class="card-badge" style="background:var(--blu);color:white;">${m.cantiere || '—'}</span>
+      </div>
+      <div class="card-sub" style="margin-top:4px;">${m.tipologia || ''}</div>
+    </div>`).join('');
+}
+
+function mostraDettaglioMezzo(targa) {
+  const m = datiGestione.find(x => x.targa === targa);
+  if (!m) return;
+  document.getElementById('dettaglio-header').textContent = '🚛 ' + targa;
+
+  const campi = [
+    ['Tipologia', m.tipologia], ['Modello', m.modello], ['Cantiere', m.cantiere],
+    ['Telaio', m.telaio], ['Immatricolato', m.immatricolato], ['Euro', m.euro],
+    ['Aut. Trasporto', m.autTrasporto], ['Assi', m.assi], ['Pneumatici', m.pneumatici],
+    ['Portata kg', m.portata], ['Massa', m.massa], ['Categoria', m.categoria],
+    ['Disponibilità', m.disponibilita], ['Proprietà', m.proprieta],
+    ['Pos. Libretto', m.posLibretto], ['Attrezzatura', m.attrezzatura],
+  ].filter(([k,v]) => v && v.trim());
+
+  document.getElementById('dettaglio-content').innerHTML = `
+    <div style="background:white;border-radius:12px;padding:16px;box-shadow:var(--shadow);">
+      ${campi.map(([k,v]) => `
+        <div class="detail-row">
+          <div class="detail-label">${k}</div>
+          <div class="detail-value">${v}</div>
+        </div>`).join('')}
+    </div>`;
+  showScreen('dettaglio-mezzo');
+}
+
+function cercaGestione(q) { renderGestione(); }
+
+// ================================================================
+//  REVISIONI
+// ================================================================
+async function loadRevisioni() {
+  document.getElementById('list-revisioni').innerHTML =
+    '<div class="loading"><div class="spinner"></div>Caricamento da Google Drive...</div>';
+
+  const data = await fetchSheet(cfg.revisioni, 'Foglio1!A2:E2000');
+  if (data.error) {
+    document.getElementById('list-revisioni').innerHTML = `
+      <div class="error-box">⚠️ ${data.error}</div>
+      <a href="${driveSheetUrl(cfg.revisioni)}" target="_blank" class="drive-link">
+        📊 Apri Revisioni su Drive
+      </a>`;
+    return;
+  }
+
+  const oggi = new Date(); oggi.setHours(0,0,0,0);
+  const tra60 = new Date(oggi); tra60.setDate(tra60.getDate() + 60);
+
+  datiRevisioni = (data.values || [])
+    .filter(r => r && r[1] && r[2] && r[3])
+    .map(r => {
+      const dataStr = r[3] || '';
+      let dataScad = null;
+      // Formato DD-MM-YYYY o DD/MM/YYYY
+      const m = dataStr.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/);
+      if (m) dataScad = new Date(+m[3], +m[2]-1, +m[1]);
+      let stato = 'ok';
+      if (dataScad) {
+        if (dataScad < oggi) stato = 'scaduta';
+        else if (dataScad <= tra60) stato = 'prossima';
+      }
+      return {
+        cod:       r[0] || '',
+        automezzo: (r[1] || '').trim().toUpperCase(),
+        tipo:      r[2] || '',
+        dataStr:   dataStr,
+        data:      dataScad,
+        costo:     r[4] || '',
+        stato:     stato,
+      };
+    });
+
+  aggiornaRevisioni();
+}
+
+function aggiornaRevisioni() {
+  const q = (document.getElementById('search-revisioni')?.value || '').trim().toUpperCase();
+  let lista = datiRevisioni;
+  if (filtroRevisioni === 'scadute')  lista = lista.filter(r => r.stato === 'scaduta');
+  if (filtroRevisioni === 'prossime') lista = lista.filter(r => r.stato === 'prossima');
+  if (filtroRevisioni === 'ok')       lista = lista.filter(r => r.stato === 'ok');
+  if (q) lista = lista.filter(r => r.automezzo.includes(q) || r.tipo.toUpperCase().includes(q));
+
+  // Ordina per data
+  lista.sort((a,b) => {
+    if (!a.data && !b.data) return 0;
+    if (!a.data) return 1;
+    if (!b.data) return -1;
+    return a.data - b.data;
+  });
+
+  const riepilogo = document.getElementById('riepilogo-revisioni');
+  const sc = datiRevisioni.filter(r => r.stato === 'scaduta').length;
+  const pr = datiRevisioni.filter(r => r.stato === 'prossima').length;
+  riepilogo.style.display = 'block';
+  riepilogo.innerHTML = `Totale: <strong>${datiRevisioni.length}</strong> &nbsp;|&nbsp; ⚠️ Scadute: <strong style="color:#C62828">${sc}</strong> &nbsp;|&nbsp; 🔔 Prossime: <strong style="color:#E65100">${pr}</strong>`;
+
+  if (lista.length === 0) {
+    document.getElementById('list-revisioni').innerHTML = '<div class="loading">Nessun risultato</div>';
+    return;
+  }
+
+  document.getElementById('list-revisioni').innerHTML = lista.map(r => {
+    const cls = r.stato === 'scaduta' ? 'scad-scad' : r.stato === 'prossima' ? 'scad-prox' : 'scad-ok';
+    const icon = r.stato === 'scaduta' ? '⚠️' : r.stato === 'prossima' ? '🔔' : '✅';
+    return `
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:start;">
+          <div>
+            <div class="card-title">${r.automezzo}</div>
+            <div class="card-sub">${r.tipo}</div>
+          </div>
+          <span class="${cls}" style="font-size:13px;">${icon} ${r.dataStr}</span>
+        </div>
+        ${r.costo ? `<div class="card-sub" style="margin-top:4px;">Costo previsto: ${r.costo}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function filtraRevisioni(tipo, btn) {
+  filtroRevisioni = tipo;
+  document.querySelectorAll('#screen-revisioni .filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  aggiornaRevisioni();
+}
+
+// ================================================================
+//  MOVIMENTI FLOTTA
+// ================================================================
+async function loadMovimenti() {
+  document.getElementById('list-movimenti').innerHTML =
+    '<div class="loading"><div class="spinner"></div>Caricamento da Google Drive...</div>';
+
+  // Leggi i dati dal foglio (righe da 6, colonne B,J,K,M,P,T,U,AA)
+  // Range: B6:AA5000 (colonne B=2 ad AA=27)
+  const data = await fetchSheet(cfg.movimenti, 'Foglio1!B6:AA5000');
+  if (data.error) {
+    document.getElementById('list-movimenti').innerHTML = `
+      <div class="error-box">⚠️ ${data.error}</div>
+      <a href="${driveSheetUrl(cfg.movimenti)}" target="_blank" class="drive-link">
+        📊 Apri Lista Movimenti su Drive
+      </a>`;
+    return;
+  }
+
+  // Colonne nel range B6:AA (0-based da B):
+  // 0=B(data), 8=J(cantiere), 9=K(targa), 11=M(marca), 14=P(km), 18=T(codart), 19=U(descr), 25=AA(totnetto)
+  datiMovimenti = [];
+  for (const r of (data.values || [])) {
+    const targa = (r[9] || '').trim().toUpperCase();
+    if (!targa) continue;
+    const dataSerial = r[0] || '';
+    let dataStr = '';
+    if (dataSerial) {
+      try {
+        const serial = parseFloat(dataSerial);
+        if (!isNaN(serial)) {
+          const d = new Date(-2209161600000 + serial * 86400000);
+          dataStr = d.toLocaleDateString('it-IT');
+        }
+      } catch(e) { dataStr = dataSerial; }
+    }
+    datiMovimenti.push({
+      data:     dataStr,
+      cantiere: (r[8] || '').trim().toUpperCase(),
+      targa:    targa,
+      marca:    (r[11] || '').trim(),
+      km:       r[14] || '',
+      codArt:   (r[18] || '').trim(),
+      descr:    (r[19] || '').trim(),
+      totNetto: parseFloat((r[25] || '0').replace(',','.')) || 0,
+    });
+  }
+
+  // Cantieri unici
+  const cantieri = [...new Set(datiMovimenti.map(m => m.cantiere).filter(Boolean))].sort();
+  renderFiltriCantiere('filter-cantieri-mov', cantieri, (c) => {
+    filtroCantiereMovimenti = c;
+    renderMovimenti();
+  });
+
+  renderMovimenti();
+}
+
+function renderMovimenti() {
+  const q = (document.getElementById('search-movimenti')?.value || '').trim().toUpperCase();
+  let lista = datiMovimenti;
+  if (filtroCantiereMovimenti) lista = lista.filter(m => m.cantiere === filtroCantiereMovimenti);
+
+  // Raggruppa per targa
+  const byTarga = {};
+  for (const m of lista) {
+    if (q && !m.targa.includes(q) && !m.marca.toUpperCase().includes(q)) continue;
+    if (!byTarga[m.targa]) byTarga[m.targa] = { targa: m.targa, marca: m.marca, movimenti: [], totale: 0 };
+    byTarga[m.targa].movimenti.push(m);
+    byTarga[m.targa].totale += m.totNetto;
+  }
+
+  const mezzi = Object.values(byTarga).sort((a,b) => a.targa.localeCompare(b.targa));
+
+  const riepilogo = document.getElementById('riepilogo-movimenti');
+  riepilogo.style.display = 'block';
+  const totGlobale = mezzi.reduce((s,m) => s + m.totale, 0);
+  const totMov = lista.filter(m => !q || m.targa.includes(q) || m.marca.toUpperCase().includes(q)).length;
+  riepilogo.innerHTML = `<strong>${mezzi.length}</strong> mezzi &nbsp;•&nbsp; <strong>${totMov}</strong> movimenti &nbsp;•&nbsp; <strong>€ ${totGlobale.toLocaleString('it-IT', {minimumFractionDigits:0, maximumFractionDigits:0})}</strong>`;
+
+  if (mezzi.length === 0) {
+    document.getElementById('list-movimenti').innerHTML = '<div class="loading">Nessun risultato</div>';
+    return;
+  }
+
+  document.getElementById('list-movimenti').innerHTML = mezzi.map(m => `
+    <div class="card" onclick="mostraDettaglioMovimenti('${m.targa}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div class="card-title">🚛 ${m.targa}</div>
+          <div class="card-sub">${m.marca || 'N/D'} &nbsp;•&nbsp; ${m.movimenti.length} movimenti</div>
+        </div>
+        <div style="font-size:15px;font-weight:700;color:var(--verde2);">€ ${m.totale.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      </div>
+    </div>`).join('');
+}
+
+function mostraDettaglioMovimenti(targa) {
+  const movimenti = datiMovimenti.filter(m => m.targa === targa);
+  if (!movimenti.length) return;
+  const marca = movimenti[0].marca;
+  const totale = movimenti.reduce((s,m) => s + m.totNetto, 0);
+
+  document.getElementById('dettaglio-mov-header').textContent = `📊 ${targa}`;
+
+  // Grafico spesa per mese
+  const perMese = {};
+  for (const m of movimenti) {
+    if (!m.data) continue;
+    const parts = m.data.split('/');
+    if (parts.length >= 3) {
+      const key = parts[1] + '/' + parts[2].substring(2); // MM/YY
+      perMese[key] = (perMese[key] || 0) + m.totNetto;
+    }
+  }
+  const mesiOrdinati = Object.keys(perMese).sort((a,b) => {
+    const [ma,ya] = a.split('/'); const [mb,yb] = b.split('/');
+    return (ya+ma).localeCompare(yb+mb);
+  });
+
+  // Raggruppa per data per la lista
+  const perData = {};
+  for (const m of movimenti) {
+    const k = m.data || 'N/D';
+    if (!perData[k]) perData[k] = [];
+    perData[k].push(m);
+  }
+  const dateOrd = Object.keys(perData).sort((a,b) => {
+    const pa = a.split('/'); const pb = b.split('/');
+    if (pa.length < 3 || pb.length < 3) return 0;
+    const da = new Date(+pa[2],+pa[1]-1,+pa[0]);
+    const db = new Date(+pb[2],+pb[1]-1,+pb[0]);
+    return db - da;
+  });
+
+  const maxVal = Math.max(...Object.values(perMese), 1);
+  const chartH = 160;
+  const barW = mesiOrdinati.length > 0 ? Math.min(60, Math.floor(300 / mesiOrdinati.length)) : 60;
+  const chartW = Math.max(300, mesiOrdinati.length * (barW + 10) + 60);
+
+  let svgBars = '';
+  mesiOrdinati.forEach((mese, i) => {
+    const val = perMese[mese];
+    const bh = Math.max(4, (val / maxVal) * 120);
+    const x = 50 + i * (barW + 8);
+    const y = 130 - bh;
+    svgBars += `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="#1565C0" rx="3"/>`;
+    const label = val >= 1000 ? (val/1000).toFixed(1)+'k' : Math.round(val)+'';
+    svgBars += `<text x="${x + barW/2}" y="${y-4}" text-anchor="middle" font-size="9" fill="#424242">${label}</text>`;
+    svgBars += `<text x="${x + barW/2}" y="148" text-anchor="middle" font-size="9" fill="#757575">${mese}</text>`;
+  });
+
+  // Linee griglia
+  const niceMax = niceNumber(maxVal);
+  const steps = 4;
+  let gridLines = '';
+  for (let i = 0; i <= steps; i++) {
+    const val = (niceMax / steps) * i;
+    const y = 130 - (val / niceMax) * 120;
+    gridLines += `<line x1="45" y1="${y}" x2="${chartW-5}" y2="${y}" stroke="#E0E0E0" stroke-width="1"/>`;
+    const lbl = val >= 1000 ? (val/1000).toFixed(0)+'k' : Math.round(val)+'';
+    gridLines += `<text x="40" y="${y+3}" text-anchor="end" font-size="9" fill="#9E9E9E">${lbl}</text>`;
+  }
+
+  const listaHTML = dateOrd.map(data => {
+    const movs = perData[data];
+    const totG = movs.reduce((s,m) => s + m.totNetto, 0);
+    return `
+      <div style="background:#E8F5E9;padding:8px 12px;margin-bottom:4px;border-radius:6px;display:flex;justify-content:space-between;">
+        <strong style="font-size:13px;color:#1B5E20;">${data}</strong>
+        <strong style="font-size:13px;color:#2E7D32;">€ ${totG.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</strong>
+      </div>
+      ${movs.map(m => `
+        <div class="card" style="margin-bottom:4px;">
+          <div style="display:flex;justify-content:space-between;">
+            <div style="font-size:13px;color:var(--testo);flex:1;padding-right:8px;">${m.descr || '—'}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--verde2);white-space:nowrap;">€ ${m.totNetto.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+          </div>
+          ${m.codArt ? `<div class="card-sub">Cod: ${m.codArt}</div>` : ''}
+          ${m.km ? `<div class="card-sub" style="color:#E65100;">${parseFloat(m.km).toLocaleString('it-IT',{maximumFractionDigits:0})} km</div>` : ''}
+        </div>`).join('')}`;
+  }).join('');
+
+  document.getElementById('dettaglio-mov-content').innerHTML = `
+    <div style="background:var(--verde2);color:white;padding:12px 16px;border-radius:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:13px;opacity:0.8;">${marca || 'N/D'}</div>
+        <div style="font-size:11px;opacity:0.7;">${movimenti.length} movimenti</div>
+      </div>
+      <div style="font-size:20px;font-weight:800;">€ ${totale.toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+    </div>
+
+    ${mesiOrdinati.length > 0 ? `
+    <div class="chart-container">
+      <svg width="${chartW}" height="160" style="min-width:${chartW}px">
+        ${gridLines}
+        <line x1="45" y1="130" x2="${chartW-5}" y2="130" stroke="#E0E0E0" stroke-width="1"/>
+        ${svgBars}
+      </svg>
+    </div>` : ''}
+
+    ${listaHTML}`;
+
+  showScreen('dettaglio-mov');
+}
+
+function niceNumber(val) {
+  if (val <= 0) return 100;
+  const exp = Math.pow(10, Math.floor(Math.log10(val)));
+  const f = val / exp;
+  let nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+  return Math.ceil(val / (nice * exp / 4)) * (nice * exp / 4);
+}
+
+function cercaMovimenti(q) { renderMovimenti(); }
+
+// ================================================================
+//  FILTRI CANTIERE GENERICI
+// ================================================================
+function renderFiltriCantiere(containerId, cantieri, onSelect) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = ['', ...cantieri].map((c, i) => `
+    <button class="filter-chip ${i===0?'active':''}"
+      onclick="selectCantiere('${containerId}',this,'${c.replace(/'/g,"\\'")}')">
+      ${c || 'Tutti'}
+    </button>`).join('');
+
+  // Salva callback
+  container._onSelect = onSelect;
+}
+
+function selectCantiere(containerId, btn, cantiere) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (container._onSelect) container._onSelect(cantiere);
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  loadConfig();
+
+  // Mostra la home
+  document.getElementById('screen-home').style.display = 'flex';
+  document.getElementById('screen-home').style.flexDirection = 'column';
+});
+</script>
+
+
+
+</body></html>
